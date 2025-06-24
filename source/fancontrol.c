@@ -185,32 +185,21 @@ void InitPowerStateMonitoring()
 }
 
 bool CheckSystemSleepState() {
-    static bool isSleeping = false;
-    static bool initialized = false;
-
-    if (!initialized) {
-        appletInitialize();  // ensure applet is initialized
-        initialized = true;
+    static bool wasFocused = true;
+    
+    AppletFocusState focusState = appletGetFocusState();
+    bool isCurrentlyFocused = (focusState == AppletFocusState_InFocus);
+    
+    // If we lost focus, assume system went to sleep
+    if (wasFocused && !isCurrentlyFocused) {
+        wasFocused = false;
+        return true; // sleeping
+    } else if (!wasFocused && isCurrentlyFocused) {
+        wasFocused = true;
+        return false; // awake
     }
-
-    AppletMessage msg;
-    while (R_SUCCEEDED(appletGetMessage(&msg))) {
-        switch (msg) {
-            case AppletMessage_Resume:
-                isSleeping = false;
-                break;
-            case AppletMessage_Sleep:
-                isSleeping = true;
-                break;
-            case AppletMessage_ExitRequested:
-                // Optionally handle exit if needed
-                break;
-            default:
-                break;
-        }
-    }
-
-    return isSleeping;
+    
+    return !isCurrentlyFocused;
 }
 
 float CalculateFanLevel(float temperatureC_f)
