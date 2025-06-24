@@ -4,11 +4,11 @@
 //Fan curve table
 const TemperaturePoint defaultTable[] =
 {
-    { .temperature_c = 20,  .fanLevel_f = 0.1   },
-    { .temperature_c = 40,  .fanLevel_f = 0.5   },
-    { .temperature_c = 50,  .fanLevel_f = 0.6   },
-    { .temperature_c = 60,  .fanLevel_f = 0.7   },
-    { .temperature_c = 100, .fanLevel_f = 1     }
+    { .temperature_c = 20, .fanLevel_f = 0.10 },
+    { .temperature_c = 35, .fanLevel_f = 0.35 },
+    { .temperature_c = 45, .fanLevel_f = 0.55 },
+    { .temperature_c = 55, .fanLevel_f = 0.75 },
+    { .temperature_c = 70, .fanLevel_f = 1.00 }
 };
 
 TemperaturePoint *fanControllerTable;
