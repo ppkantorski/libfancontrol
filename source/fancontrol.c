@@ -184,19 +184,33 @@ void InitPowerStateMonitoring()
     }
 }
 
-bool CheckSystemSleepState()
-{
-    // This would need to be implemented based on the specific system API
-    // For now, we'll use a placeholder that assumes active state
-    // In a real implementation, this would check system power management state
-    
-    // Placeholder logic - in real implementation, check actual system state
-    static u32 checkCounter = 0;
-    checkCounter++;
-    
-    // Simulate sleep detection based on system activity
-    // This is where you'd integrate with actual system power management APIs
-    return false; // For now, assume always active
+bool CheckSystemSleepState() {
+    static bool isSleeping = false;
+    static bool initialized = false;
+
+    if (!initialized) {
+        appletInitialize();  // ensure applet is initialized
+        initialized = true;
+    }
+
+    AppletMessage msg;
+    while (R_SUCCEEDED(appletGetMessage(&msg))) {
+        switch (msg) {
+            case AppletMessage_Resume:
+                isSleeping = false;
+                break;
+            case AppletMessage_Sleep:
+                isSleeping = true;
+                break;
+            case AppletMessage_ExitRequested:
+                // Optionally handle exit if needed
+                break;
+            default:
+                break;
+        }
+    }
+
+    return isSleeping;
 }
 
 float CalculateFanLevel(float temperatureC_f)
