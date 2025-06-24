@@ -84,22 +84,22 @@ void InitLog()
     }
 }
 
-void WriteLog(const char *buffer)
-{
-    if (!buffer) return;
-    
-    FILE *log = fopen(LOG_FILE, "a");
-    if(log != NULL)
-    {
-        time_t now;
-        time(&now);
-        struct tm *timeinfo = localtime(&now);
-        
-        fprintf(log, "[%02d:%02d:%02d] %s\n", 
-                timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, buffer);
-        fclose(log);
-    }
-}
+//void WriteLog(const char *buffer)
+//{
+//    if (!buffer) return;
+//    
+//    FILE *log = fopen(LOG_FILE, "a");
+//    if(log != NULL)
+//    {
+//        time_t now;
+//        time(&now);
+//        struct tm *timeinfo = localtime(&now);
+//        
+//        fprintf(log, "[%02d:%02d:%02d] %s\n", 
+//                timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec, buffer);
+//        fclose(log);
+//    }
+//}
 
 void WriteConfigFile(TemperaturePoint *table)
 {
@@ -134,7 +134,7 @@ void ReadConfigFile(TemperaturePoint **table_out)
 
     *table_out = malloc(sizeof(defaultTable));
     if (!*table_out) {
-        WriteLog("Memory allocation failed");
+        //WriteLog("Memory allocation failed");
         return;
     }
     
@@ -144,14 +144,14 @@ void ReadConfigFile(TemperaturePoint **table_out)
     {
         CreateDir(CONFIG_DIR);
         WriteConfigFile(NULL);
-        WriteLog("Created missing config directory");
+        //WriteLog("Created missing config directory");
     }
     else
     {
         if(access(CONFIG_FILE, F_OK) == -1)
         {
             WriteConfigFile(NULL);
-            WriteLog("Created missing config file");
+            //WriteLog("Created missing config file");
         }
         else
         {
@@ -161,9 +161,9 @@ void ReadConfigFile(TemperaturePoint **table_out)
                 fclose(config);
                 
                 if (bytesRead == 1) {
-                    WriteLog("Config file loaded successfully");
+                    //WriteLog("Config file loaded successfully");
                 } else {
-                    WriteLog("Config file corrupted, using defaults");
+                    //WriteLog("Config file corrupted, using defaults");
                     memcpy(*table_out, defaultTable, sizeof(defaultTable));
                 }
             }
@@ -178,9 +178,9 @@ void InitPowerStateMonitoring()
     Result rs = eventCreate(&powerStateEvent, true);
     if (R_SUCCEEDED(rs)) {
         powerStateEventInitialized = true;
-        WriteLog("Power state monitoring initialized");
+        //WriteLog("Power state monitoring initialized");
     } else {
-        WriteLog("Power state monitoring unavailable");
+        //WriteLog("Power state monitoring unavailable");
     }
 }
 
@@ -289,12 +289,12 @@ void FanControllerThreadFunction(void* arg)
     Result rs = fanOpenController(&fc, 0x3D000001);
     if(R_FAILED(rs))
     {
-        WriteLog("ERROR: Failed to open fan controller");
+        //WriteLog("ERROR: Failed to open fan controller");
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
         return;
     }
 
-    WriteLog("Fan controller thread started");
+    //WriteLog("Fan controller thread started");
     
     // Initialize power state monitoring
     InitPowerStateMonitoring();
@@ -308,7 +308,7 @@ void FanControllerThreadFunction(void* arg)
         rs = Tmp451GetSocTemp(&temperatureC_f);
         if(R_FAILED(rs))
         {
-            WriteLog("ERROR: Failed to get temperature");
+            //WriteLog("ERROR: Failed to get temperature");
             // Don't abort on temperature read failure, try again later
             svcSleepThread(NORMAL_SLEEP_INTERVAL);
             continue;
@@ -332,14 +332,14 @@ void FanControllerThreadFunction(void* arg)
             rs = fanControllerSetRotationSpeedLevel(&fc, fanLevelSet_f);
             if(R_FAILED(rs))
             {
-                WriteLog("ERROR: Failed to set fan speed");
+                //WriteLog("ERROR: Failed to set fan speed");
                 // Continue operation even if fan control fails
             } else {
                 snprintf(logBuffer, sizeof(logBuffer), 
                         "Temp: %.1f°C, Fan: %.1f%%, Sleep: %s", 
                         temperatureC_f, fanLevelSet_f * 100.0f,
                         systemInSleepMode ? "Yes" : "No");
-                WriteLog(logBuffer);
+                //WriteLog(logBuffer);
             }
         }
         
@@ -360,13 +360,13 @@ void FanControllerThreadFunction(void* arg)
     }
     
     fanControllerClose(&fc);
-    WriteLog("Fan controller thread stopped");
+    //WriteLog("Fan controller thread stopped");
 }
 
 void InitFanController(TemperaturePoint *table)
 {
     if (!table) {
-        WriteLog("ERROR: Invalid fan control table");
+        //WriteLog("ERROR: Invalid fan control table");
         return;
     }
     
@@ -384,10 +384,10 @@ void InitFanController(TemperaturePoint *table)
     Result rs = threadCreate(&FanControllerThread, FanControllerThreadFunction, NULL, NULL, 0x4000, 0x3F, -2);
     if(R_FAILED(rs))
     {
-        WriteLog("ERROR: Failed to create fan controller thread");
+        //WriteLog("ERROR: Failed to create fan controller thread");
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
     } else {
-        WriteLog("Fan controller thread created successfully");
+        //WriteLog("Fan controller thread created successfully");
     }
 }
 
@@ -396,23 +396,23 @@ void StartFanControllerThread()
     Result rs = threadStart(&FanControllerThread);
     if(R_FAILED(rs))
     {
-        WriteLog("ERROR: Failed to start fan controller thread");
+        //WriteLog("ERROR: Failed to start fan controller thread");
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
     } else {
-        WriteLog("Fan controller thread started successfully");
+        //WriteLog("Fan controller thread started successfully");
     }
 }
 
 void CloseFanControllerThread()
 {   
-    WriteLog("Shutting down fan controller thread...");
+    //WriteLog("Shutting down fan controller thread...");
     
     fanControllerThreadExit = true;
     
     Result rs = threadWaitForExit(&FanControllerThread);
     if(R_FAILED(rs))
     {
-        WriteLog("ERROR: Failed to wait for thread exit");
+        //WriteLog("ERROR: Failed to wait for thread exit");
         // Continue with cleanup anyway
     }
     
@@ -429,7 +429,7 @@ void CloseFanControllerThread()
         fanControllerTable = NULL;
     }
     
-    WriteLog("Fan controller shutdown complete");
+    //WriteLog("Fan controller shutdown complete");
 }
 
 void WaitFanController()
@@ -437,7 +437,7 @@ void WaitFanController()
     Result rs = threadWaitForExit(&FanControllerThread);
     if(R_FAILED(rs))
     {
-        WriteLog("ERROR: Failed to wait for fan controller thread");
+        //WriteLog("ERROR: Failed to wait for fan controller thread");
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
     }
 }
